@@ -63,6 +63,10 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
         ;
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
@@ -91,9 +95,9 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
 
         foreach ($records as $email) {
             $valid = $this->isEmailValid($email[0], $this->validator);
-            if(($valid)){
+            if (($valid)){
                 $properEmails[] = [$email[0]];
-            }else{
+            } else {
                 $wrongEmails[] = [$email[0]];
             }
         }
@@ -101,14 +105,14 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
         $this->putResultsIntoCsv($properEmails, self::PROPER_EMAILS_CSV_FILENAME);
         $this->putResultsIntoCsv($wrongEmails, self::WRONG_EMAILS_CSV_FILENAME);
 
+        $summaryCsvFilePath = $this->resultDir . self::VALIDATION_SUMMARY_CSV_FILENAME;
+        $this->createFile($summaryCsvFilePath);
+        $csvWithSummary = Writer::createFromPath($summaryCsvFilePath, 'w');
+
         $summaryHeaders = ['Proper emails number', 'Wrong emails number'];
 
         list($wrongEmailsCount, $properEmailsCount, $summaryData) =
             $this->prepareSummaryData($wrongEmails, $properEmails);
-
-        $summaryCsvFilePath = $this->resultDir . self::VALIDATION_SUMMARY_CSV_FILENAME;
-        $this->createFile($summaryCsvFilePath);
-        $csvWithSummary = Writer::createFromPath($summaryCsvFilePath, 'w');
 
         try {
             $csvWithSummary->setDelimiter(';');
