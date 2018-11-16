@@ -43,6 +43,7 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
 
     /**
      * ExtractEmailsFromCsvCommand constructor.
+     * @param ContainerInterface $container
      */
     public function __construct(ContainerInterface $container)
     {
