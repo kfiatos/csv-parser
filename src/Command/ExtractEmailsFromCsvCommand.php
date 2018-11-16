@@ -20,6 +20,7 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
     protected const WRONG_EMAILS_CSV_FILENAME = 'wrong_emails.csv';
     protected const PROPER_EMAILS_CSV_FILENAME = 'proper_emails.csv';
     protected const VALIDATION_SUMMARY_CSV_FILENAME = 'validaion_summary.csv';
+    protected const VALIDATION_SUMMARY_TXT_FILENAME = 'validaion_summary.txt';
 
     protected const DATA_DIRECTORY_PATH = '/src/Data/';
     protected const RESULT_DIRECTORY_PATH = '/src/Data/Result/';
@@ -123,13 +124,17 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
             return;
         }
 
-        $io->success(
-            sprintf(
-                'File %s was successfully processed. There were %s proper emails and %s wrong emails',
-                $inputFilename,
-                $properEmailsCount,
-                $wrongEmailsCount
-            ));
+        $successMessage = sprintf(
+            'File %s was successfully processed. There were %s proper emails and %s wrong emails',
+            $inputFilename,
+            $properEmailsCount,
+            $wrongEmailsCount
+        );
+
+        $summaryTXTFilePath = $this->resultDir . self::VALIDATION_SUMMARY_TXT_FILENAME;
+        file_put_contents($summaryTXTFilePath, $successMessage);
+
+        $io->success($successMessage);
     }
 
 
