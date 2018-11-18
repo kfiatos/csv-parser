@@ -23,6 +23,10 @@ class CsvEmailDataParserService implements EmailDataParserInterface
         $this->validator = $validator;
     }
 
+    /**
+     * @param array $inputData
+     * @return array
+     */
     public function getProperEmailAddressees(array $inputData): array
     {
         $properEmails = [];
@@ -36,6 +40,10 @@ class CsvEmailDataParserService implements EmailDataParserInterface
         return $properEmails;
     }
 
+    /**
+     * @param array $inputData
+     * @return array
+     */
     public function getWrongEmailAddressees(array $inputData): array
     {
         $wrongEmails = [];
