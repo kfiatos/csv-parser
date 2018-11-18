@@ -2,6 +2,8 @@
 
 namespace App\Command;
 
+use App\Service\CsvEmailDataParserService;
+use App\Service\Interfaces\EmailDataParserInterface;
 use League\Csv\Exception;
 use League\Csv\Reader;
 use League\Csv\Statement;
@@ -12,8 +14,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Validator\Constraints as Assert;
 
 class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
 {
@@ -38,19 +38,22 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
     protected $resultDir;
 
     /**
-     * @var ValidatorInterface
+     * @var EmailDataParserInterface
      */
-    protected $validator;
+    protected $csvEmailDataParserService;
 
     /**
      * ExtractEmailsFromCsvCommand constructor.
      * @param ContainerInterface $container
+     * @param CsvEmailDataParserService $csvEmailDataParserService
      */
-    public function __construct(ContainerInterface $container)
-    {
+    public function __construct(
+        ContainerInterface $container,
+        CsvEmailDataParserService $csvEmailDataParserService
+    ) {
         $this->resultDir = $container->get('kernel')->getProjectDir() . self::RESULT_DIRECTORY_PATH;
         $this->dataDir = $container->get('kernel')->getProjectDir() . self::DATA_DIRECTORY_PATH;
-        $this->validator = $container->get('validator');
+        $this->csvEmailDataParserService = $csvEmailDataParserService;
         return parent::__construct();
     }
 
@@ -91,17 +94,8 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
         $stmt = new Statement();
         $records = $stmt->process($inputCsv);
 
-        $properEmails = [];
-        $wrongEmails = [];
-
-        foreach ($records as $email) {
-            $valid = $this->isEmailValid($email[0], $this->validator);
-            if (($valid)){
-                $properEmails[] = [$email[0]];
-            } else {
-                $wrongEmails[] = [$email[0]];
-            }
-        }
+        $properEmails = $this->csvEmailDataParserService->getProperEmailAddressees(iterator_to_array($records));
+        $wrongEmails = $this->csvEmailDataParserService->getWrongEmailAddressees(iterator_to_array($records));
 
         $this->putResultsIntoCsv($properEmails, self::PROPER_EMAILS_CSV_FILENAME);
         $this->putResultsIntoCsv($wrongEmails, self::WRONG_EMAILS_CSV_FILENAME);
@@ -138,25 +132,7 @@ class ExtractEmailsFromCsvCommand extends ContainerAwareCommand
     }
 
 
-    /**
-     * @param string $email
-     * @param ValidatorInterface $validator
-     * @return bool
-     */
-    protected function isEmailValid($email, ValidatorInterface $validator): bool
-    {
-        $emailConstraint = new Assert\Email();
-        // use the validator to validate the value
-        $errors = $validator->validate(
-            $email,
-            $emailConstraint
-        );
 
-        if (0 === count($errors)) {
-            return true;
-        }
-        return false;
-    }
 
     /**
      * @param string $path
